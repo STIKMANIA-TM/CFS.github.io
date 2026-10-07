@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stikmania Finanzas + Stock</title>
+<style>
+  :root {
+    --bg: #0b0f19; --surface: #151b2b; --surface-2: #1b2338;
+    --border: #262d42; --text: #f8fafc; --muted: #8b94a7;
+    --primary: #3b82f6; --success: #10b981; --danger: #ef4444; --warn: #f59e0b;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--text); line-height: 1.45; padding-bottom: 30px; }
+  .app { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .topbar h1 { font-size: 1.6rem; margin-bottom: 0.2rem; }
+  .muted { color: var(--muted); font-size: 0.9rem; }
+  .top-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .file-btn { display: inline-flex; align-items: center; cursor: pointer; overflow: hidden; }
+  .file-btn input { display: none; }
+  .tabs { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); }
+  .tab { border: none; background: transparent; color: var(--muted); font-weight: 700; padding: 0.7rem 1rem; border-radius: 10px; cursor: pointer; white-space: nowrap; font-size: 0.95rem; }
+  .tab.active { color: var(--text); background: var(--surface-2); }
+  .view { display: none; }
+  .view.active { display: block; animation: fade 0.2s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem; margin-bottom: 1rem; }
+  .card h2 { font-size: 1rem; margin-bottom: 0.9rem; }
+  .grid { display: grid; gap: 1rem; }
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .two { grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .two { grid-template-columns: 1fr 1fr; } }
+  .kpi { display: flex; flex-direction: column; gap: 0.35rem; }
+  .kpi .label { color: var(--muted); font-size: 0.8rem; }
+  .kpi strong { font-size: 1.35rem; }
+  .btn { border: 1px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 12px; padding: 0.75rem 1rem; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: white; }
+  .btn.danger { background: var(--danger); border-color: var(--danger); color: white; }
+  .btn.ghost { background: transparent; }
+  .btn.block { width: 100%; }
+  .btn.btn-sm { padding: 0.4rem 0.65rem; font-size: 0.78rem; border-radius: 10px; }
+  .btn.success { background: var(--success); border-color: var(--success); color: #04281d; }
+  .btn.warn { background: var(--warn); border-color: var(--warn); color: #3d2800; }
+  .btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.9rem; }
+  .form-group { margin-bottom: 0.9rem; }
+  .form-group label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.35rem; font-weight: 600; }
+  input, select, textarea { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 0.8rem; outline: none; font-size: 0.95rem; }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+  .checkbox { display: flex; align-items: center; gap: 0.5rem; }
+  .checkbox input { width: auto; }
+  .preview { background: var(--surface-2); border: 1px dashed var(--border); border-radius: 12px; padding: 0.8rem; color: var(--muted); margin: 0.8rem 0; white-space: pre-line; font-size: 0.9rem; }
+  .hidden { display: none !important; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.72); display: none; align-items: flex-end; justify-content: center; z-index: 100; }
+  .modal.active { display: flex; }
+  .modal-content { width: 100%; max-width: 780px; max-height: 92vh; overflow: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.2rem; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .icon-btn { border: none; background: transparent; color: var(--muted); font-size: 1.7rem; cursor: pointer; }
+  .alert { padding: 0.8rem 1rem; border-radius: 12px; margin-bottom: 0.7rem; font-weight: 600; font-size: 0.9rem; }
+  .alert.info { background: rgba(59,130,246,0.14); color: #bfdbfe; border: 1px solid rgba(59,130,246,0.25); }
+  .alert.danger { background: rgba(239,68,68,0.14); color: #fecaca; border: 1px solid rgba(239,68,68,0.25); }
+  .alert.warning { background: rgba(245,158,11,0.14); color: #fde68a; border: 1px solid rgba(245,158,11,0.25); }
+  .badge { display: inline-block; padding: 0.28rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 800; margin: 0.15rem 0.25rem 0.15rem 0; }
+  .badge.gray { background: rgba(148,163,184,0.16); color: #cbd5e1; }
+  .badge.green { background: rgba(16,185,129,0.16); color: #6ee7b7; }
+  .badge.red { background: rgba(239,68,68,0.16); color: #fca5a5; }
+  .badge.blue { background: rgba(59,130,246,0.16); color: #93c5fd; }
+  .badge.yellow { background: rgba(245,158,11,0.16); color: #fcd34d; }
+  .op-card { border: 1px solid var(--border); border-radius: 14px; padding: 0.9rem; margin-bottom: 0.8rem; background: var(--surface-2); }
+  .op-top { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+  .op-title { font-weight: 800; margin-bottom: 0.25rem; }
+  .op-meta { color: var(--muted); font-size: 0.88rem; white-space: pre-line; margin-top: 0.5rem; }
+  .op-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.8rem; }
+  .list-item { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 0.8rem; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 0.7rem; background: var(--surface-2); }
+  .list-item .info { flex: 1; }
+  .list-item .actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+  .toolbar { display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  .toolbar select { width: auto; min-width: 180px; }
+  .stock-line { display: flex; justify-content: space-between; gap: 1rem; padding: 0.45rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .stock-line:last-child { border-bottom: none; }
+  .stock-line span { color: var(--muted); }
+  .stock-line strong { font-size: 0.98rem; }
+  .add-row { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; margin-top: 0.8rem; }
+  .filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .filter-btn { border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 999px; padding: 0.45rem 0.8rem; cursor: pointer; font-size: 0.82rem; font-weight: 700; }
+  .filter-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .pending-banner { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35); color: #fde68a; border-radius: 14px; padding: 0.9rem 1rem; display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+  .pending-banner strong { font-size: 1rem; }
+  .material-card { border: 1px solid var(--border); border-radius: 14px; padding: 1rem; margin-bottom: 0.8rem; background: var(--surface-2); }
+  .material-card.low-stock { border-color: var(--warn); }
+  .material-card.critical-stock { border-color: var(--danger); }
+  .material-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem; }
+  .material-name { font-weight: 800; font-size: 1rem; }
+  .material-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.6rem; margin-top: 0.6rem; }
+  .material-stat { background: var(--bg); border-radius: 10px; padding: 0.6rem; }
+  .material-stat .label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.2rem; }
+  .material-stat .value { font-weight: 700; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <h1>Stikmania Finanzas + Stock</h1>
+        <p class="muted">USD · Precio mínimo por hoja · Estado pendiente</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn ghost" id="btnExportTop">Exportar respaldo</button>
+        <label class="btn ghost file-btn">
+          Importar respaldo
+          <input type="file" accept=".json" id="fileImportTop">
+        </label>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-view="dashboard">Panel</button>
+      <button class="tab" data-view="movements">Movimientos</button>
+      <button class="tab" data-view="stock">Stock</button>
+      <button class="tab" data-view="settings">Configuración</button>
+    </nav>
+
+    <main>
+      <section id="dashboard" class="view active">
+        <div class="card">
+          <div class="toolbar">
+            <div>
+              <h2>Periodo</h2>
+              <select id="periodFilter">
+                <option value="all">Todo</option>
+                <option value="today">Hoy</option>
+                <option value="week">Esta Semana</option>
+                <option value="month" selected>Este Mes</option>
+                <option value="year">Este Año</option>
+              </select>
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="btnNewIncome">Nuevo ingreso</button>
+              <button class="btn" id="btnNewExpense">Nuevo gasto</button>
+              <button class="btn" id="btnNewPurchase">Compra material</button>
+            </div>
+          </div>
+        </div>
+        <div id="pendingBanner"></div>
+        <div class="card">
+          <h2>Resumen financiero del periodo</h2>
+          <div class="grid kpis" id="methodBalances"></div>
+        </div>
+        <div class="grid two">
+          <div class="card">
+            <h2>Capital por pilar</h2>
+            <div id="capitalList"></div>
+          </div>
+          <div class="card">
+            <h2>Rentabilidad STIKMANIA</h2>
+            <div class="stock-line"><span>Ingresos</span><strong id="profitGross">$0.00</strong></div>
+            <div class="stock-line"><span>Costos</span><strong id="profitCost">$0.00</strong></div>
+            <div class="stock-line"><span>Neto</span><strong id="profitNet">$0.00</strong></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>⚠️ Alertas de stock</h2>
+          <div id="stockAlerts"></div>
+        </div>
+        <div class="card">
+          <h2>Ingresos STIKMANIA por línea</h2>
+          <div id="lineSummary"></div>
+        </div>
+      </section>
+
+      <section id="movements" class="view">
+        <div class="card">
+          <div class="toolbar">
+            <h2>Historial de movimientos</h2>
+            <div class="btn-row">
+              <button class="btn primary" id="btnNewIncome2">Nuevo ingreso</button>
+              <button class="btn" id="btnNewExpense2">Nuevo gasto</button>
+              <button class="btn" id="btnNewPurchase2">Compra material</button>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <button class="filter-btn active" data-sfilter="all">Todos</button>
+            <button class="filter-btn" data-sfilter="completado">Completados</button>
+            <button class="filter-btn" data-sfilter="pendiente">Pendientes</button>
+            <button class="filter-btn" data-sfilter="ingreso">Ingresos</button>
+            <button class="filter-btn" data-sfilter="gasto">Gastos</button>
+          </div>
+          <div id="movementsList"></div>
+        </div>
+      </section>
+
+      <section id="stock" class="view">
+        <div class="card">
+          <div class="toolbar">
+            <h2>Inventario</h2>
+            <div class="btn-row">
+              <button class="btn primary" id="btnNewPurchase3">Compra material</button>
+              <button class="btn" id="btnNewWaste">Registrar merma</button>
+              <button class="btn" id="btnAddMaterial">Agregar material</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Resumen de inventario</h2>
+          <div class="grid kpis" id="inventorySummary"></div>
+        </div>
+        <div class="card">
+          <h2>Materiales</h2>
+          <div id="materialsList"></div>
+        </div>
+        <div class="card">
+          <h2>Precio mínimo por hoja (promedio ponderado)</h2>
+          <p class="muted" style="margin-bottom:0.8rem;">
+            Se calcula automáticamente: Costo total acumulado ÷ Total de hojas.
+            Este es el precio mínimo para recuperar tu inversión.
+          </p>
+          <div id="priceResults"></div>
+        </div>
+        <div class="card">
+          <h2>Historial de movimientos de inventario</h2>
+          <div id="inventoryMovementsList"></div>
+        </div>
+      </section>
+
+      <section id="settings" class="view">
+        <div class="grid two">
+          <div class="card">
+            <h2>Moneda y respaldo</h2>
+            <div class="grid two">
+              <div class="form-group">
+                <label>Código de moneda</label>
+                <input id="currencyCode" value="USD">
+              </div>
+              <div class="form-group">
+                <label>Símbolo</label>
+                <input id="currencySymbol" value="$">
+              </div>
+            </div>
+            <div class="form-group checkbox">
+              <input type="checkbox" id="autoBackup" checked>
+              <span>Backup automático al guardar/eliminar operaciones</span>
+            </div>
+            <button class="btn primary" id="btnSaveGeneral">Guardar general</button>
+          </div>
+          <div class="card">
+            <h2>Métodos de pago</h2>
+            <div id="paymentMethodsList"></div>
+            <div class="add-row">
+              <input id="newMethod" placeholder="Nuevo método de pago">
+              <button class="btn primary" id="btnAddMethod">Agregar</button>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Pilares</h2>
+            <div id="pillarsList"></div>
+            <div class="add-row">
+              <input id="newPillar" placeholder="Nuevo pilar">
+              <button class="btn primary" id="btnAddPillar">Agregar</button>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Líneas STIKMANIA</h2>
+            <div id="businessLinesList"></div>
+            <div class="add-row">
+              <input id="newLine" placeholder="Nueva línea">
+              <button class="btn primary" id="btnAddLine">Agregar</button>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Distribución del ingreso STIKMANIA</h2>
+            <p class="muted" style="margin-bottom:0.8rem;">La suma debe dar 100%.</p>
+            <div id="distributionInputs"></div>
+            <button class="btn primary" id="btnSaveDistribution">Guardar distribución</button>
+          </div>
+          <div class="card">
+            <h2>Datos</h2>
+            <div class="btn-row">
+              <button class="btn" id="btnExportSettings">Exportar respaldo</button>
+              <label class="btn file-btn">
+                Importar respaldo
+                <input type="file" accept=".json" id="fileImportSettings">
+              </label>
+              <button class="btn danger" id="btnResetApp">Reiniciar app</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- MODAL MOVIMIENTO -->
+    <div class="modal" id="movementModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Nuevo movimiento</h2>
+          <button class="icon-btn" id="btnCloseMovement">×</button>
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="mType">
+            <option value="income">Ingreso</option>
+            <option value="expense">Gasto</option>
+          </select>
+        </div>
+        <div class="grid two">
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" id="mDate">
+          </div>
+          <div class="form-group">
+            <label>Método de pago</label>
+            <select id="mMethod"></select>
+          </div>
+        </div>
+        <div class="grid two">
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="mStatus">
+              <option value="completado">Completado</option>
+              <option value="pendiente">Pendiente</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Monto</label>
+            <input type="number" id="mAmount" min="0" step="0.01" placeholder="0.00">
+          </div>
+        </div>
+        <div class="grid two">
+          <div class="form-group">
+            <label>Costo</label>
+            <input type="number" id="mCost" min="0" step="0.01" placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label>Cliente</label>
+            <input id="mClient" placeholder="Opcional">
+          </div>
+        </div>
+        <div class="form-group" id="mLineGroup">
+          <label>Línea STIKMANIA</label>
+          <select id="mLine"></select>
+        </div>
+        <div class="form-group hidden" id="mPillarGroup">
+          <label>Pilar</label>
+          <select id="mPillar"></select>
+        </div>
+        <div class="form-group" id="mMaterialGroup">
+          <label>¿Consumir material?</label>
+          <div class="checkbox">
+            <input type="checkbox" id="mConsumeMaterial">
+            <span>Descontar hojas del inventario</span>
+          </div>
+        </div>
+        <div class="hidden" id="mConsumeDetails">
+          <div class="grid two">
+            <div class="form-group">
+              <label>Material a consumir</label>
+              <select id="mConsumeMaterialId"></select>
+            </div>
+            <div class="form-group">
+              <label>Cantidad de hojas</label>
+              <input type="number" id="mConsumeSheets" min="0.1" step="0.1" placeholder="1">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notas *</label>
+          <textarea id="mNotes" rows="4" placeholder="Campo obligatorio"></textarea>
+        </div>
+        <div class="preview" id="movementPreview"></div>
+        <button class="btn primary block" id="btnSaveMovement">Guardar movimiento</button>
+      </div>
+    </div>
+
+    <!-- MODAL COMPRA -->
+    <div class="modal" id="purchaseModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Compra de material</h2>
+          <button class="icon-btn" id="btnClosePurchase">×</button>
+        </div>
+        <div class="grid two">
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" id="pDate">
+          </div>
+          <div class="form-group">
+            <label>Método de pago</label>
+            <select id="pMethod"></select>
+          </div>
+        </div>
+        <div class="grid two">
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="pStatus">
+              <option value="completado">Completado</option>
+              <option value="pendiente">Pendiente</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tipo de material</label>
+            <select id="pMaterial"></select>
+          </div>
+        </div>
+        <div class="grid two">
+          <div class="form-group">
+            <label>Proveedor *</label>
+            <input id="pSupplier" placeholder="¿Con quién compraste?">
+          </div>
+          <div class="form-group">
+            <label>Costo del paquete *</label>
+            <input type="number" id="pCostPerPack" min="0" step="0.01" placeholder="0.00" oninput="updatePurchasePreview()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Cantidad de hojas que trae *</label>
+          <input type="number" id="pSheets" min="1" step="1" placeholder="20" oninput="updatePurchasePreview()">
+        </div>
+        <div class="form-group">
+          <label>Notas *</label>
+          <textarea id="pNotes" rows="3" placeholder="Campo obligatorio"></textarea>
+        </div>
+        <div class="preview" id="purchasePreview"></div>
+        <button class="btn primary block" id="btnSavePurchase">Guardar compra</button>
+      </div>
+    </div>
+
+    <!-- MODAL MERMA -->
+    <div class="modal" id="wasteModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Registrar merma / ajuste</h2>
+          <button class="icon-btn" id="btnCloseWaste">×</button>
+        </div>
+        <div class="grid two">
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" id="wDate">
+          </div>
+          <div class="form-group">
+            <label>Material</label>
+            <select id="wMaterial"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Hojas a descontar</label>
+          <input type="number" id="wSheets" min="0.1" step="0.1" placeholder="1">
+        </div>
+        <div class="form-group">
+          <label>Notas *</label>
+          <textarea id="wNotes" rows="3" placeholder="Ej: prueba de impresión, error de corte, material dañado"></textarea>
+        </div>
+        <button class="btn primary block" id="btnSaveWaste">Registrar merma</button>
+      </div>
+    </div>
+
+    <!-- MODAL MATERIAL -->
+    <div class="modal" id="materialModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="materialModalTitle">Agregar material</h2>
+          <button class="icon-btn" id="btnCloseMaterial">×</button>
+        </div>
+        <div class="form-group">
+          <label>Nombre del material *</label>
+          <input id="matName" placeholder="Ej: Vinilo brillante">
+        </div>
+        <div class="grid two">
+          <div class="form-group">
+            <label>Stock actual (hojas)</label>
+            <input type="number" id="matCurrentStock" min="0" step="0.1" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Stock mínimo (hojas)</label>
+            <input type="number" id="matMinStock" min="0" step="1" placeholder="10">
+          </div>
+        </div>
+        <p class="muted" style="margin-bottom:0.9rem;">
+          El costo promedio y precio mínimo se calculan automáticamente con cada compra.
+          Si cambias el stock actual, se registrará un ajuste manual.
+        </p>
+        <button class="btn primary block" id="btnSaveMaterial">Guardar material</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const STORAGE_KEY = "stikmania_finanzas_stock_v3";
+
+const DEFAULT_DB = {
+  settings: {
+    currencyCode: "USD",
+    currencySymbol: "$",
+    autoBackup: true,
+    paymentMethods: ["Efectivo","Transferencia","Tarjeta Tropical","Tarjeta Clásica","Saldo Móvil"],
+    pillars: ["Inversión","Comida","Ahorro"],
+    businessLines: ["General","Web","Venta de stickers"],
+    distribution: { "Inversión": 40, "Comida": 30, "Ahorro": 30 }
+  },
+  materials: [
+    { id: "vinyl", name: "Vinilo", sheetsPerPack: 20, minStock: 10, currentStock: 40, avgCostPerSheet: 0.6, lastPurchaseCostPerPack: 12, lastPurchaseDate: null },
+    { id: "photo_paper", name: "Papel Fotográfico Adhesivo", sheetsPerPack: 20, minStock: 10, currentStock: 20, avgCostPerSheet: 0.5, lastPurchaseCostPerPack: 10, lastPurchaseDate: null }
+  ],
+  movements: [],
+  inventoryMovements: []
+};
+
+let db;
+let statusFilter = "all";
+
+const $ = (id) => document.getElementById(id);
+function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+function loadDB() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) { db = clone(DEFAULT_DB); return; }
+  try { db = JSON.parse(raw); normalizeDB(); } catch (err) { db = clone(DEFAULT_DB); }
+}
+
+function normalizeDB() {
+  const OLD_PILLARS_MAP = {
+    "Gastos Fijos": "Inversión",
+    "Fijos": "Inversión",
+    "Stikmania": "Inversión",
+    "Ocio": "Comida",
+    "Inversión": "Inversión",
+    "Emergencia": "Ahorro",
+    "Ahorro": "Ahorro"
+  };
+
+  if (!db.settings) db.settings = {};
+  if (!db.movements) db.movements = [];
+  if (!db.materials) db.materials = clone(DEFAULT_DB.materials);
+  if (!db.inventoryMovements) db.inventoryMovements = [];
+
+  if (!db.settings.currencyCode) db.settings.currencyCode = "USD";
+  if (!db.settings.currencySymbol) db.settings.currencySymbol = "$";
+  if (typeof db.settings.autoBackup === "undefined") db.settings.autoBackup = true;
+  if (!Array.isArray(db.settings.paymentMethods)) db.settings.paymentMethods = clone(DEFAULT_DB.settings.paymentMethods);
+  if (!Array.isArray(db.settings.pillars)) db.settings.pillars = clone(DEFAULT_DB.settings.pillars);
+  if (!Array.isArray(db.settings.businessLines)) db.settings.businessLines = clone(DEFAULT_DB.settings.businessLines);
+  if (!db.settings.distribution || typeof db.settings.distribution !== "object") db.settings.distribution = clone(DEFAULT_DB.settings.distribution);
+
+  let migrated = false;
+  db.movements.forEach((m) => {
+    if (m.pillar && OLD_PILLARS_MAP[m.pillar]) {
+      m.pillar = OLD_PILLARS_MAP[m.pillar];
+      migrated = true;
+    }
+    if (m.allocations && typeof m.allocations === "object") {
+      const newAlloc = {};
+      Object.entries(m.allocations).forEach(([key, val]) => {
+        const newKey = OLD_PILLARS_MAP[key] || key;
+        newAlloc[newKey] = (newAlloc[newKey] || 0) + val;
+      });
+      m.allocations = newAlloc;
+      migrated = true;
+    }
+    if (!m.status) { m.status = "completado"; migrated = true; }
+    if (typeof m.isPurchase === "undefined") { m.isPurchase = false; migrated = true; }
+    if (m.consumedMaterial && !m.consumeMaterialId) {
+      m.consumeMaterialId = m.consumedMaterial;
+      m.consumeSheets = m.consumedSheets || 0;
+      migrated = true;
+    }
+  });
+
+  if (migrated || Object.keys(db.settings.distribution).some(k => OLD_PILLARS_MAP[k])) {
+    const newDist = {};
+    db.settings.pillars.forEach(p => { newDist[p] = 0; });
+    Object.entries(db.settings.distribution).forEach(([key, val]) => {
+      const newKey = OLD_PILLARS_MAP[key] || key;
+      if (db.settings.pillars.includes(newKey)) {
+        newDist[newKey] = (newDist[newKey] || 0) + val;
+      }
+    });
+    const sum = Object.values(newDist).reduce((a, b) => a + b, 0);
+    if (sum > 0 && Math.abs(sum - 100) > 0.01) {
+      const factor = 100 / sum;
+      Object.keys(newDist).forEach(k => { newDist[k] = round2(newDist[k] * factor); });
+    }
+    db.settings.distribution = newDist;
+  }
+
+  db.settings.pillars.forEach((pillar) => {
+    if (typeof db.settings.distribution[pillar] === "undefined") db.settings.distribution[pillar] = 0;
+  });
+
+  Object.keys(db.settings.distribution).forEach((key) => {
+    if (!db.settings.pillars.includes(key)) delete db.settings.distribution[key];
+  });
+
+  db.materials.forEach((mat) => {
+    if (typeof mat.sheetsPerPack === "undefined") mat.sheetsPerPack = 20;
+    if (typeof mat.minStock === "undefined") mat.minStock = 10;
+  });
+
+  if (migrated) console.log("✅ Datos migrados automáticamente desde versión anterior");
+}
+
+function saveDB() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
+function round2(n) { return Math.round((Number(n) + Number.EPSILON) * 100) / 100; }
+function fmt(n) {
+  return db.settings.currencySymbol + (Number(n) || 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function todayISO() { return new Date().toISOString().split("T")[0]; }
+function uid() { return String(Date.now()) + "_" + Math.floor(Math.random() * 99999); }
+function esc(value) {
+  return String(value || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+}
+
+function switchView(view) {
+  document.querySelectorAll(".view").forEach((el) => el.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach((el) => el.classList.remove("active"));
+  $(view).classList.add("active");
+  document.querySelector('.tab[data-view="' + view + '"]').classList.add("active");
+}
+
+function getStartOfWeek(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function inPeriod(dateStr, period) {
+  if (period === "all") return true;
+  const d = new Date(dateStr + "T00:00:00");
+  const now = new Date();
+  if (period === "today") return dateStr === todayISO();
+  if (period === "week") {
+    const start = getStartOfWeek(now);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return d >= start && d <= end;
+  }
+  if (period === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  if (period === "year") return d.getFullYear() === now.getFullYear();
+  return true;
+}
+
+function getPeriodMovements() {
+  const period = $("periodFilter").value;
+  return db.movements.filter((m) => inPeriod(m.date, period));
+}
+function getCompletedInPeriod() { return getPeriodMovements().filter((m) => m.status === "completado"); }
+function getFilteredMovements() {
+  let arr = getPeriodMovements();
+  if (statusFilter === "completado" || statusFilter === "pendiente") arr = arr.filter((m) => m.status === statusFilter);
+  if (statusFilter === "ingreso" || statusFilter === "gasto") arr = arr.filter((m) => m.type === statusFilter);
+  return [...arr].sort((a, b) => b.createdAt - a.createdAt);
+}
+function getMaterial(id) { return db.materials.find((m) => m.id === id); }
+
+function buildAllocations(amount) {
+  const alloc = {};
+  const dist = db.settings.distribution || {};
+  let sum = 0;
+  db.settings.pillars.forEach((pillar) => { sum += Number(dist[pillar] || 0); });
+  if (sum <= 0) { alloc[db.settings.pillars[0]] = round2(amount); return alloc; }
+  db.settings.pillars.forEach((pillar) => {
+    const pct = Number(dist[pillar] || 0);
+    if (pct > 0) alloc[pillar] = round2(amount * pct / sum);
+  });
+  let allocated = Object.values(alloc).reduce((a, b) => round2(a + b), 0);
+  let diff = round2(amount - allocated);
+  if (diff !== 0) {
+    const keys = Object.keys(alloc);
+    const first = keys.length ? keys[0] : db.settings.pillars[0];
+    alloc[first] = round2((alloc[first] || 0) + diff);
+  }
+  return alloc;
+}
+
+function downloadBackup(prefix) {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  const ts = new Date().toISOString().replaceAll(":", "").replaceAll("T", "_").split(".")[0];
+  a.href = URL.createObjectURL(blob);
+  a.download = "stikmania_backup_" + prefix + "_" + ts + ".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function backupIfAuto() { if (db.settings.autoBackup) downloadBackup("auto"); }
+
+function applyConsumption(m) {
+  if (!m.consumeMaterialId || !(Number(m.consumeSheets) > 0)) return true;
+  const mat = getMaterial(m.consumeMaterialId);
+  if (!mat) return false;
+  const sheets = Number(m.consumeSheets);
+  if (sheets > mat.currentStock) return false;
+  mat.currentStock = round2(mat.currentStock - sheets);
+  const invId = uid();
+  m.inventoryMovementId = invId;
+  db.inventoryMovements.push({ id: invId, createdAt: Date.now(), date: m.date, materialId: mat.id, type: "consumption", sheets: sheets, notes: "Consumo por venta: " + (m.notes || ""), linkedMovementId: m.id });
+  return true;
+}
+function revertConsumption(m) {
+  if (!m.consumeMaterialId || !(Number(m.consumeSheets) > 0)) return;
+  const mat = getMaterial(m.consumeMaterialId);
+  if (mat) mat.currentStock = round2(mat.currentStock + Number(m.consumeSheets));
+  db.inventoryMovements = db.inventoryMovements.filter((i) => i.linkedMovementId !== m.id);
+  m.inventoryMovementId = null;
+}
+
+function applyPurchase(m) {
+  const mat = getMaterial(m.purchaseMaterialId);
+  if (!mat) return false;
+  m.prevMaterial = { currentStock: mat.currentStock, avgCostPerSheet: mat.avgCostPerSheet };
+  const sheets = m.purchaseSheets || (m.purchasePacks * mat.sheetsPerPack);
+  const totalCost = m.amount;
+  const currentStockValue = mat.currentStock * mat.avgCostPerSheet;
+  const newStock = round2(mat.currentStock + sheets);
+  const newAvg = newStock > 0 ? round2((currentStockValue + totalCost) / newStock) : 0;
+  mat.currentStock = newStock;
+  mat.avgCostPerSheet = newAvg;
+  mat.lastPurchaseCostPerPack = totalCost;
+  mat.lastPurchaseDate = m.date;
+  const invId = uid();
+  m.inventoryMovementId = invId;
+  db.inventoryMovements.push({ id: invId, createdAt: Date.now(), date: m.date, materialId: mat.id, type: "purchase", sheets: sheets, packs: 1, costPerPack: totalCost, supplier: m.client || "", notes: m.notes || "", linkedMovementId: m.id });
+  return true;
+}
+function revertPurchase(m) {
+  const mat = getMaterial(m.purchaseMaterialId);
+  if (!mat) return;
+  if (m.prevMaterial) {
+    mat.currentStock = m.prevMaterial.currentStock;
+    mat.avgCostPerSheet = m.prevMaterial.avgCostPerSheet;
+  } else {
+    const sheets = m.purchaseSheets || (m.purchasePacks * (mat.sheetsPerPack || 20));
+    mat.currentStock = round2(Math.max(0, mat.currentStock - sheets));
+  }
+  db.inventoryMovements = db.inventoryMovements.filter((i) => i.linkedMovementId !== m.id);
+  m.inventoryMovementId = null;
+}
+
+function applyMovement(m) {
+  if (m.status === "completado") return true;
+  let ok = true;
+  if (m.isPurchase) ok = applyPurchase(m); else ok = applyConsumption(m);
+  if (ok) m.status = "completado";
+  return ok;
+}
+function revertMovement(m) {
+  if (m.status !== "completado") return;
+  if (m.isPurchase) revertPurchase(m); else revertConsumption(m);
+  m.status = "pendiente";
+}
+
+function renderAll() {
+  renderPendingBanner();
+  renderMethodBalances();
+  renderCapital();
+  renderProfit();
+  renderLineSummary();
+  renderStockAlerts();
+  renderMovements();
+  renderInventorySummary();
+  renderMaterialsList();
+  renderInventoryMovements();
+  renderSettings();
+  renderMaterialSelects();
+  renderPriceResults();
+  renderFilterButtons();
+}
+
+function renderPendingBanner() {
+  const pending = db.movements.filter((m) => m.status === "pendiente");
+  const el = $("pendingBanner");
+  if (!pending.length) { el.innerHTML = ""; return; }
+  el.innerHTML = `
+    <div class="pending-banner">
+      <div>
+        <strong>⏳ Tienes ${pending.length} movimiento(s) pendiente(s)</strong>
+        <div class="muted">No afectan saldos ni stock hasta completarse.</div>
+      </div>
+      <button class="btn warn" id="btnViewPending">Ver pendientes</button>
+    </div>
+  `;
+  $("btnViewPending").addEventListener("click", () => { statusFilter = "pendiente"; switchView("movements"); renderAll(); });
+}
+function renderFilterButtons() {
+  document.querySelectorAll("[data-sfilter]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.sfilter === statusFilter);
+  });
+}
+
+function renderMethodBalances() {
+  const filtered = getCompletedInPeriod();
+  const methodsSet = new Set(db.settings.paymentMethods);
+  filtered.forEach((m) => methodsSet.add(m.method));
+  const balances = {};
+  methodsSet.forEach((method) => { balances[method] = 0; });
+  let total = 0;
+  filtered.forEach((m) => {
+    const delta = m.type === "income" ? Number(m.amount) : -Number(m.amount);
+    balances[m.method] = round2((balances[m.method] || 0) + delta);
+    total = round2(total + delta);
+  });
+  let html = '<div class="card kpi"><span class="label">Saldo total</span><strong>' + fmt(total) + "</strong></div>";
+  Object.keys(balances).forEach((method) => {
+    html += '<div class="card kpi"><span class="label">' + esc(method) + "</span><strong>" + fmt(balances[method]) + "</strong></div>";
+  });
+  $("methodBalances").innerHTML = html;
+}
+
+function renderCapital() {
+  const filtered = getCompletedInPeriod();
+  const capital = {};
+  db.settings.pillars.forEach((pillar) => { capital[pillar] = 0; });
+  filtered.forEach((m) => {
+    if (m.type === "income" && m.allocations) {
+      Object.entries(m.allocations).forEach(([pillar, value]) => {
+        if (!(pillar in capital)) capital[pillar] = 0;
+        capital[pillar] = round2(capital[pillar] + Number(value || 0));
+      });
+    }
+    if (m.type === "expense" && m.pillar) {
+      if (!(m.pillar in capital)) capital[m.pillar] = 0;
+      capital[m.pillar] = round2(capital[m.pillar] - Number(m.amount || 0));
+    }
+  });
+  let html = "";
+  Object.entries(capital).forEach(([pillar, value]) => {
+    html += '<div class="stock-line"><span>' + esc(pillar) + "</span><strong>" + fmt(value) + "</strong></div>";
+  });
+  $("capitalList").innerHTML = html || '<div class="muted">Sin pilares.</div>';
+}
+
+function renderProfit() {
+  const filtered = getCompletedInPeriod().filter((m) => m.type === "income");
+  let gross = 0, cost = 0;
+  filtered.forEach((m) => { gross = round2(gross + Number(m.amount || 0)); cost = round2(cost + Number(m.cost || 0)); });
+  const net = round2(gross - cost);
+  $("profitGross").textContent = fmt(gross);
+  $("profitCost").textContent = fmt(cost);
+  $("profitNet").textContent = fmt(net);
+  $("profitNet").style.color = net >= 0 ? "var(--success)" : "var(--danger)";
+}
+
+function renderLineSummary() {
+  const filtered = getCompletedInPeriod().filter((m) => m.type === "income");
+  const lines = {};
+  filtered.forEach((m) => { const line = m.line || "General"; lines[line] = round2((lines[line] || 0) + Number(m.amount || 0)); });
+  let html = "";
+  Object.entries(lines).sort((a, b) => b[1] - a[1]).forEach(([line, amount]) => {
+    html += '<div class="stock-line"><span>' + esc(line) + "</span><strong>" + fmt(amount) + "</strong></div>";
+  });
+  $("lineSummary").innerHTML = html || '<div class="muted">Sin ingresos completados en este periodo.</div>';
+}
+
+function renderStockAlerts() {
+  let html = "";
+  db.materials.forEach((mat) => {
+    if (mat.currentStock <= mat.minStock * 0.5) {
+      html += '<div class="alert danger">⚠️ Stock crítico: ' + esc(mat.name) + " — quedan " + mat.currentStock + " hojas (mínimo: " + mat.minStock + ")</div>";
+    } else if (mat.currentStock <= mat.minStock) {
+      html += '<div class="alert warning">⚠️ Stock bajo: ' + esc(mat.name) + " — quedan " + mat.currentStock + " hojas (mínimo: " + mat.minStock + ")</div>";
+    }
+  });
+  $("stockAlerts").innerHTML = html || '<div class="alert info">Sin alertas de stock.</div>';
+}
+
+function renderMovements() {
+  const filtered = getFilteredMovements();
+  if (!filtered.length) { $("movementsList").innerHTML = '<div class="muted">No hay movimientos para este filtro.</div>'; return; }
+  let html = "";
+  filtered.forEach((m) => {
+    let title = "";
+    if (m.isPurchase) { const mat = getMaterial(m.purchaseMaterialId); title = "Compra · " + (mat ? esc(mat.name) : "Material"); }
+    else if (m.type === "income") title = "Ingreso STIKMANIA · " + esc(m.line || "General");
+    else title = "Gasto · " + esc(m.pillar || "-");
+    const amountClass = m.type === "income" ? "green" : "red";
+    const typeLabel = m.type === "income" ? "Ingreso" : "Gasto";
+    const statusBadge = m.status === "completado" ? '<span class="badge green">Completado</span>' : '<span class="badge yellow">Pendiente</span>';
+    const metaLines = ["Fecha: " + esc(m.date), "Método: " + esc(m.method)];
+    if (m.client) metaLines.push("Cliente: " + esc(m.client));
+    if (m.isPurchase) metaLines.push("Hojas: " + (m.purchaseSheets || 0) + " · Costo: " + fmt(m.purchaseCostPerPack));
+    if (m.type === "income" && m.consumeMaterialId && Number(m.consumeSheets) > 0) {
+      const mat = getMaterial(m.consumeMaterialId);
+      metaLines.push("Consumo: " + m.consumeSheets + " hojas de " + (mat ? esc(mat.name) : "") + (m.status === "pendiente" ? " (se descontará al completar)" : ""));
+    }
+    metaLines.push("Notas: " + esc(m.notes));
+    const toggleLabel = m.status === "pendiente" ? "✓ Completar" : "↩ Pendiente";
+    const toggleClass = m.status === "pendiente" ? "success" : "warn";
+    html += `
+      <div class="op-card">
+        <div class="op-top">
+          <div>
+            <div class="op-title">${title}</div>
+            <div><span class="badge gray">${typeLabel}</span>${statusBadge}</div>
+          </div>
+          <strong style="color: var(--${amountClass})">${m.type === "income" ? "+" : "-"}${fmt(m.amount)}</strong>
+        </div>
+        <div class="op-meta">${metaLines.join("\n")}</div>
+        <div class="op-actions">
+          <button class="btn ${toggleClass} btn-sm" data-action="toggleMovement" data-id="${m.id}">${toggleLabel}</button>
+          <button class="btn danger btn-sm" data-action="deleteMovement" data-id="${m.id}">Eliminar</button>
+        </div>
+      </div>
+    `;
+  });
+  $("movementsList").innerHTML = html;
+}
+
+function renderInventorySummary() {
+  let totalValue = 0, totalSheets = 0;
+  db.materials.forEach((mat) => { totalValue += mat.currentStock * mat.avgCostPerSheet; totalSheets += mat.currentStock; });
+  totalValue = round2(totalValue);
+  $("inventorySummary").innerHTML = `
+    <div class="card kpi"><span class="label">Valor del inventario</span><strong>${fmt(totalValue)}</strong></div>
+    <div class="card kpi"><span class="label">Total de hojas</span><strong>${totalSheets}</strong></div>
+    <div class="card kpi"><span class="label">Materiales</span><strong>${db.materials.length}</strong></div>
+  `;
+}
+
+function renderMaterialsList() {
+  let html = "";
+  db.materials.forEach((mat) => {
+    let stockClass = "";
+    if (mat.currentStock <= mat.minStock * 0.5) stockClass = "critical-stock";
+    else if (mat.currentStock <= mat.minStock) stockClass = "low-stock";
+    const costSheet = Number(mat.avgCostPerSheet) || 0;
+    const stockValue = round2(costSheet * mat.currentStock);
+    html += `
+      <div class="material-card ${stockClass}">
+        <div class="material-header">
+          <span class="material-name">${esc(mat.name)}</span>
+          <div class="btn-row">
+            <button class="btn btn-sm" data-action="editMaterial" data-id="${mat.id}">Editar</button>
+            <button class="btn danger btn-sm" data-action="deleteMaterial" data-id="${mat.id}">Borrar</button>
+          </div>
+        </div>
+        <div class="material-stats">
+          <div class="material-stat"><div class="label">Stock actual</div><div class="value">${mat.currentStock} hojas</div></div>
+          <div class="material-stat"><div class="label">Valor inventario</div><div class="value">${fmt(stockValue)}</div></div>
+          <div class="material-stat"><div class="label">Precio mínimo / hoja</div><div class="value" style="color:var(--warn)">${fmt(costSheet)}</div></div>
+          <div class="material-stat"><div class="label">Stock mínimo</div><div class="value">${mat.minStock} hojas</div></div>
+        </div>
+      </div>
+    `;
+  });
+  $("materialsList").innerHTML = html || '<div class="muted">Sin materiales.</div>';
+}
+
+function renderInventoryMovements() {
+  const sorted = [...db.inventoryMovements].sort((a, b) => b.createdAt - a.createdAt);
+  if (!sorted.length) { $("inventoryMovementsList").innerHTML = '<div class="muted">Sin movimientos de inventario.</div>'; return; }
+  let html = "";
+  sorted.forEach((mov) => {
+    const mat = getMaterial(mov.materialId);
+    const matName = mat ? mat.name : "Material eliminado";
+    const typeLabels = { purchase: "Compra", consumption: "Consumo", waste: "Merma", adjustment: "Ajuste" };
+    const typeLabel = typeLabels[mov.type] || mov.type;
+    let sign = "-", badgeClass = "red";
+    if (mov.type === "purchase") { sign = "+"; badgeClass = "green"; }
+    else if (mov.type === "adjustment") { sign = mov.sheets >= 0 ? "+" : "-"; badgeClass = "blue"; }
+    const absSheets = Math.abs(mov.sheets);
+    const costLine = mov.type === "purchase" ? "Costo: " + fmt(mov.costPerPack) + " por " + mov.sheets + " hojas" : "";
+    const metaLines = ["Fecha: " + esc(mov.date), costLine, mov.supplier ? "Proveedor: " + esc(mov.supplier) : "", "Notas: " + esc(mov.notes)].filter(Boolean);
+    html += `
+      <div class="op-card">
+        <div class="op-top">
+          <div>
+            <div class="op-title">${typeLabel} · ${esc(matName)}</div>
+            <div><span class="badge ${badgeClass}">${typeLabel}</span><span class="badge gray">${sign}${absSheets} hojas</span></div>
+          </div>
+        </div>
+        <div class="op-meta">${metaLines.join("\n")}</div>
+        <div class="op-actions">
+          <button class="btn danger btn-sm" data-action="deleteInventoryMovement" data-id="${mov.id}">Eliminar</button>
+        </div>
+      </div>
+    `;
+  });
+  $("inventoryMovementsList").innerHTML = html;
+}
+
+function renderPriceResults() {
+  let html = "";
+  db.materials.forEach((mat) => {
+    const costSheet = Number(mat.avgCostPerSheet) || 0;
+    html += '<div class="stock-line"><span>' + esc(mat.name) + ' (' + mat.currentStock + ' hojas)</span><strong style="color:var(--warn)">' + fmt(costSheet) + ' / hoja</strong></div>';
+  });
+  $("priceResults").innerHTML = html || '<div class="muted">Agrega materiales y registra compras para ver los precios mínimos.</div>';
+}
+
+function renderSettings() {
+  $("currencyCode").value = db.settings.currencyCode;
+  $("currencySymbol").value = db.settings.currencySymbol;
+  $("autoBackup").checked = !!db.settings.autoBackup;
+
+  $("paymentMethodsList").innerHTML = db.settings.paymentMethods.map((method) => {
+    return `<div class="list-item"><div class="info">${esc(method)}</div><div class="actions"><button class="btn danger btn-sm" data-action="deleteMethod" data-value="${encodeURIComponent(method)}">Borrar</button></div></div>`;
+  }).join("") || '<div class="muted">Sin métodos de pago.</div>';
+
+  $("pillarsList").innerHTML = db.settings.pillars.map((pillar) => {
+    return `<div class="list-item"><div class="info">${esc(pillar)}</div><div class="actions"><button class="btn btn-sm" data-action="renamePillar" data-value="${encodeURIComponent(pillar)}">Renombrar</button><button class="btn danger btn-sm" data-action="deletePillar" data-value="${encodeURIComponent(pillar)}">Borrar</button></div></div>`;
+  }).join("") || '<div class="muted">Sin pilares.</div>';
+
+  $("businessLinesList").innerHTML = db.settings.businessLines.map((line) => {
+    return `<div class="list-item"><div class="info">${esc(line)}</div><div class="actions"><button class="btn danger btn-sm" data-action="deleteLine" data-value="${encodeURIComponent(line)}">Borrar</button></div></div>`;
+  }).join("") || '<div class="muted">Sin líneas.</div>';
+
+  $("distributionInputs").innerHTML = db.settings.pillars.map((pillar, idx) => {
+    return `<div class="form-group"><label>${esc(pillar)} (%)</label><input type="number" id="dist_${idx}" min="0" max="100" step="0.01" value="${Number(db.settings.distribution[pillar] || 0)}"></div>`;
+  }).join("");
+}
+
+function renderMaterialSelects() {
+  const options = db.materials.map((mat) => '<option value="' + mat.id + '">' + esc(mat.name) + "</option>").join("");
+  $("pMaterial").innerHTML = options;
+  $("wMaterial").innerHTML = options;
+  $("mConsumeMaterialId").innerHTML = options;
+}
+
+function renderModalSelects() {
+  $("mMethod").innerHTML = db.settings.paymentMethods.map((method) => '<option value="' + esc(method) + '">' + esc(method) + "</option>").join("");
+  $("mLine").innerHTML = db.settings.businessLines.map((line) => '<option value="' + esc(line) + '">' + esc(line) + "</option>").join("");
+  $("mPillar").innerHTML = db.settings.pillars.map((pillar) => '<option value="' + esc(pillar) + '">' + esc(pillar) + "</option>").join("");
+}
+
+function updateModalVisibility() {
+  const type = $("mType").value;
+  if (type === "income") {
+    $("modalTitle").textContent = "Nuevo ingreso STIKMANIA";
+    $("mLineGroup").classList.remove("hidden");
+    $("mPillarGroup").classList.add("hidden");
+    $("mMaterialGroup").classList.remove("hidden");
+  } else {
+    $("modalTitle").textContent = "Nuevo gasto";
+    $("mLineGroup").classList.add("hidden");
+    $("mPillarGroup").classList.remove("hidden");
+    $("mMaterialGroup").classList.add("hidden");
+    $("mConsumeDetails").classList.add("hidden");
+    $("mConsumeMaterial").checked = false;
+  }
+  updateMovementPreview();
+}
+
+function updateMovementPreview() {
+  const type = $("mType").value;
+  const amount = Number($("mAmount").value) || 0;
+  const status = $("mStatus").value;
+  if (type === "income") {
+    const alloc = buildAllocations(amount);
+    let text = "Distribución automática del ingreso STIKMANIA:\n";
+    Object.entries(alloc).forEach(([pillar, value]) => { text += pillar + ": " + fmt(value) + "\n"; });
+    if (status === "pendiente") text += "\nEstado: PENDIENTE. No afectará saldo ni stock hasta completarse.";
+    if ($("mConsumeMaterial").checked) {
+      const matId = $("mConsumeMaterialId").value;
+      const sheets = Number($("mConsumeSheets").value) || 0;
+      const mat = getMaterial(matId);
+      if (mat && sheets > 0) {
+        const cost = round2(sheets * mat.avgCostPerSheet);
+        text += "\nConsumirá " + sheets + " hojas de " + mat.name + " (costo: " + fmt(cost) + ")";
+        if (status === "pendiente") text += "\nEl consumo se aplicará al completar el movimiento.";
+        if (sheets > mat.currentStock) text += "\n⚠️ Stock insuficiente. Disponible: " + mat.currentStock + " hojas";
+      }
+    }
+    $("movementPreview").textContent = text;
+  } else {
+    let text = "El gasto se asignará al pilar seleccionado.";
+    if (status === "pendiente") text += "\nEstado: PENDIENTE. No afectará el saldo hasta completarse.";
+    $("movementPreview").textContent = text;
+  }
+}
+
+function updatePurchasePreview() {
+  const costPerPack = Number($("pCostPerPack").value) || 0;
+  const sheets = Number($("pSheets").value) || 0;
+  const matId = $("pMaterial").value;
+  const mat = getMaterial(matId);
+  const status = $("pStatus").value;
+  if (!mat || costPerPack <= 0 || sheets <= 0) { $("purchasePreview").textContent = "Completa costo y hojas para ver el cálculo."; return; }
+  const minPrice = round2(costPerPack / sheets);
+  const currentStockValue = mat.currentStock * mat.avgCostPerSheet;
+  const newTotalSheets = mat.currentStock + sheets;
+  const newAvg = newTotalSheets > 0 ? round2((currentStockValue + costPerPack) / newTotalSheets) : 0;
+  let text = "Cálculo:\n";
+  text += fmt(costPerPack) + " ÷ " + sheets + " hojas = " + fmt(minPrice) + " por hoja\n\n";
+  text += "Precio mínimo de venta por hoja: " + fmt(minPrice) + "\n\n";
+  text += "Después de esta compra:\n";
+  text += "Stock total: " + newTotalSheets + " hojas\n";
+  text += "Nuevo precio mínimo (promedio): " + fmt(newAvg) + " por hoja";
+  if (status === "pendiente") text += "\n\nEstado: PENDIENTE. No afectará finanzas ni stock hasta completarse.";
+  $("purchasePreview").textContent = text;
+}
+
+function openMovementModal(type) {
+  renderModalSelects();
+  renderMaterialSelects();
+  $("mType").value = type;
+  $("mDate").value = todayISO();
+  $("mStatus").value = "completado";
+  $("mAmount").value = "";
+  $("mCost").value = "";
+  $("mClient").value = "";
+  $("mNotes").value = "";
+  $("mConsumeMaterial").checked = false;
+  $("mConsumeDetails").classList.add("hidden");
+  $("mConsumeSheets").value = "";
+  if (db.settings.paymentMethods.length) $("mMethod").value = db.settings.paymentMethods[0];
+  if (db.settings.businessLines.length) $("mLine").value = db.settings.businessLines[0];
+  if (db.settings.pillars.length) $("mPillar").value = db.settings.pillars[0];
+  updateModalVisibility();
+  $("movementModal").classList.add("active");
+}
+function closeMovementModal() { $("movementModal").classList.remove("active"); }
+
+function openPurchaseModal() {
+  renderMaterialSelects();
+  $("pDate").value = todayISO();
+  $("pStatus").value = "completado";
+  $("pCostPerPack").value = "";
+  $("pSheets").value = "";
+  $("pSupplier").value = "";
+  $("pNotes").value = "";
+  if (db.settings.paymentMethods.length) {
+    $("pMethod").innerHTML = db.settings.paymentMethods.map((method) => '<option value="' + esc(method) + '">' + esc(method) + "</option>").join("");
+  }
+  updatePurchasePreview();
+  $("purchaseModal").classList.add("active");
+}
+function closePurchaseModal() { $("purchaseModal").classList.remove("active"); }
+
+function openWasteModal() {
+  renderMaterialSelects();
+  $("wDate").value = todayISO();
+  $("wSheets").value = "";
+  $("wNotes").value = "";
+  $("wasteModal").classList.add("active");
+}
+function closeWasteModal() { $("wasteModal").classList.remove("active"); }
+
+function fillMaterialForm(mat) {
+  if (mat) {
+    $("materialModalTitle").textContent = "Editar material";
+    $("matName").value = mat.name;
+    $("matMinStock").value = mat.minStock;
+    $("matCurrentStock").value = mat.currentStock;
+  } else {
+    $("materialModalTitle").textContent = "Agregar material";
+    $("matName").value = "";
+    $("matMinStock").value = "10";
+    $("matCurrentStock").value = "0";
+  }
+}
+function openMaterialModal() {
+  $("materialModal").dataset.editId = "";
+  fillMaterialForm(null);
+  $("materialModal").classList.add("active");
+}
+function editMaterial(id) {
+  const mat = getMaterial(id);
+  if (!mat) return;
+  $("materialModal").dataset.editId = id;
+  fillMaterialForm(mat);
+  $("materialModal").classList.add("active");
+}
+function closeMaterialModal() { $("materialModal").classList.remove("active"); }
+
+function saveMaterial() {
+  const editId = $("materialModal").dataset.editId || "";
+  const name = $("matName").value.trim();
+  const minStock = Number($("matMinStock").value) || 0;
+  const currentStock = Number($("matCurrentStock").value) || 0;
+  if (!name) return alert("Escribe el nombre del material.");
+  if (minStock < 0) return alert("El stock mínimo no puede ser negativo.");
+  if (currentStock < 0) return alert("El stock actual no puede ser negativo.");
+  if (editId) {
+    const mat = getMaterial(editId);
+    if (!mat) return;
+    const oldStock = Number(mat.currentStock) || 0;
+    mat.name = name;
+    mat.minStock = minStock;
+    const diff = round2(currentStock - oldStock);
+    mat.currentStock = round2(currentStock);
+    if (Math.abs(diff) > 0.001) {
+      db.inventoryMovements.push({ id: uid(), createdAt: Date.now(), date: todayISO(), materialId: mat.id, type: "adjustment", sheets: diff, notes: "Ajuste manual. Antes: " + oldStock + " → Ahora: " + currentStock, linkedMovementId: null });
+    }
+  } else {
+    const id = uid();
+    db.materials.push({ id, name, sheetsPerPack: 0, minStock, currentStock: round2(currentStock), avgCostPerSheet: 0, lastPurchaseCostPerPack: 0, lastPurchaseDate: null });
+    if (currentStock > 0) {
+      db.inventoryMovements.push({ id: uid(), createdAt: Date.now(), date: todayISO(), materialId: id, type: "adjustment", sheets: round2(currentStock), notes: "Stock inicial", linkedMovementId: null });
+    }
+  }
+  saveDB();
+  renderAll();
+  closeMaterialModal();
+  backupIfAuto();
+}
+
+function saveMovement() {
+  const type = $("mType").value;
+  const date = $("mDate").value;
+  const method = $("mMethod").value;
+  const status = $("mStatus").value;
+  const amount = Number($("mAmount").value) || 0;
+  const cost = Number($("mCost").value) || 0;
+  const client = $("mClient").value.trim();
+  const notes = $("mNotes").value.trim();
+  if (!date) return alert("Selecciona la fecha.");
+  if (!method) return alert("Selecciona un método de pago.");
+  if (amount <= 0) return alert("El monto debe ser mayor a 0.");
+  if (!notes) return alert("Las notas son obligatorias.");
+  const movement = {
+    id: uid(), createdAt: Date.now(), type, date, method, status,
+    amount: round2(amount), cost: round2(cost), client, notes,
+    source: "STIKMANIA", line: null, pillar: null, allocations: null,
+    isPurchase: false, consumeMaterialId: null, consumeSheets: 0, inventoryMovementId: null
+  };
+  if (type === "income") {
+    movement.line = $("mLine").value || "General";
+    movement.allocations = buildAllocations(amount);
+    if ($("mConsumeMaterial").checked) {
+      const matId = $("mConsumeMaterialId").value;
+      const sheets = Number($("mConsumeSheets").value) || 0;
+      movement.consumeMaterialId = matId;
+      movement.consumeSheets = sheets;
+      if (status === "completado") {
+        const ok = applyConsumption(movement);
+        if (!ok) return alert("Stock insuficiente para completar este movimiento.");
+      }
+    }
+  } else {
+    movement.pillar = $("mPillar").value;
+    if (!movement.pillar) return alert("Selecciona un pilar.");
+  }
+  db.movements.push(movement);
+  saveDB();
+  renderAll();
+  closeMovementModal();
+  backupIfAuto();
+}
+
+function savePurchase() {
+  const date = $("pDate").value;
+  const method = $("pMethod").value;
+  const status = $("pStatus").value;
+  const matId = $("pMaterial").value;
+  const costPerPack = Number($("pCostPerPack").value) || 0;
+  const sheets = Number($("pSheets").value) || 0;
+  const supplier = $("pSupplier").value.trim();
+  const notes = $("pNotes").value.trim();
+  if (!date) return alert("Selecciona la fecha.");
+  if (!matId) return alert("Selecciona un tipo de material.");
+  if (!supplier) return alert("Escribe el proveedor.");
+  if (costPerPack <= 0) return alert("El costo del paquete debe ser mayor a 0.");
+  if (sheets <= 0) return alert("La cantidad de hojas debe ser mayor a 0.");
+  if (!notes) return alert("Las notas son obligatorias.");
+  const mat = getMaterial(matId);
+  if (!mat) return alert("Material no encontrado.");
+  const movement = {
+    id: uid(), createdAt: Date.now(), type: "expense", date, method, status,
+    amount: round2(costPerPack), cost: 0, client: supplier, notes,
+    source: null, line: null, pillar: null, allocations: null,
+    isPurchase: true, purchaseMaterialId: matId, purchasePacks: 1,
+    purchaseCostPerPack: costPerPack, purchaseSheets: sheets,
+    inventoryMovementId: null, prevMaterial: null
+  };
+  if (status === "completado") {
+    const ok = applyPurchase(movement);
+    if (!ok) return alert("Error al procesar la compra.");
+  }
+  db.movements.push(movement);
+  saveDB();
+  renderAll();
+  closePurchaseModal();
+  backupIfAuto();
+}
+
+function saveWaste() {
+  const date = $("wDate").value;
+  const matId = $("wMaterial").value;
+  const sheets = Number($("wSheets").value) || 0;
+  const notes = $("wNotes").value.trim();
+  if (!date) return alert("Selecciona la fecha.");
+  if (!matId) return alert("Selecciona un material.");
+  if (sheets <= 0) return alert("La cantidad de hojas debe ser mayor a 0.");
+  if (!notes) return alert("Las notas son obligatorias.");
+  const mat = getMaterial(matId);
+  if (!mat) return alert("Material no encontrado.");
+  if (sheets > mat.currentStock) return alert("No puedes descontar más hojas de las que hay en stock.\nDisponible: " + mat.currentStock + " hojas");
+  mat.currentStock = round2(mat.currentStock - sheets);
+  db.inventoryMovements.push({ id: uid(), createdAt: Date.now(), date, materialId: matId, type: "waste", sheets, notes });
+  saveDB();
+  renderAll();
+  closeWasteModal();
+  backupIfAuto();
+}
+
+function addPaymentMethod() {
+  const value = $("newMethod").value.trim();
+  if (!value) return alert("Escribe un método de pago.");
+  if (db.settings.paymentMethods.includes(value)) return alert("Ese método ya existe.");
+  db.settings.paymentMethods.push(value);
+  $("newMethod").value = "";
+  saveDB();
+  renderAll();
+}
+function deletePaymentMethod(value) {
+  const used = db.movements.some((m) => m.method === value);
+  if (used) return alert("No se puede borrar porque hay movimientos con ese método.");
+  db.settings.paymentMethods = db.settings.paymentMethods.filter((m) => m !== value);
+  saveDB();
+  renderAll();
+}
+function addPillar() {
+  const value = $("newPillar").value.trim();
+  if (!value) return alert("Escribe un pilar.");
+  if (db.settings.pillars.includes(value)) return alert("Ese pilar ya existe.");
+  db.settings.pillars.push(value);
+  db.settings.distribution[value] = 0;
+  $("newPillar").value = "";
+  saveDB();
+  renderAll();
+}
+function renamePillar(oldName) {
+  const newName = prompt("Nuevo nombre del pilar:", oldName);
+  if (!newName || newName === oldName) return;
+  if (db.settings.pillars.includes(newName)) return alert("Ese pilar ya existe.");
+  const idx = db.settings.pillars.indexOf(oldName);
+  if (idx === -1) return;
+  db.settings.pillars[idx] = newName;
+  if (typeof db.settings.distribution[oldName] !== "undefined") {
+    db.settings.distribution[newName] = db.settings.distribution[oldName];
+    delete db.settings.distribution[oldName];
+  }
+  db.movements.forEach((m) => {
+    if (m.pillar === oldName) m.pillar = newName;
+    if (m.allocations && typeof m.allocations[oldName] !== "undefined") {
+      m.allocations[newName] = m.allocations[oldName];
+      delete m.allocations[oldName];
+    }
+  });
+  saveDB();
+  renderAll();
+}
+function deletePillar(value) {
+  const used = db.movements.some((m) => m.pillar === value || (m.allocations && typeof m.allocations[value] !== "undefined"));
+  if (used) return alert("No se puede borrar porque hay movimientos usando ese pilar.");
+  if (Number(db.settings.distribution[value] || 0) > 0) return alert("Ese pilar tiene porcentaje en la distribución. Ponlo en 0% antes de borrarlo.");
+  db.settings.pillars = db.settings.pillars.filter((p) => p !== value);
+  delete db.settings.distribution[value];
+  saveDB();
+  renderAll();
+}
+function addLine() {
+  const value = $("newLine").value.trim();
+  if (!value) return alert("Escribe una línea.");
+  if (db.settings.businessLines.includes(value)) return alert("Esa línea ya existe.");
+  db.settings.businessLines.push(value);
+  $("newLine").value = "";
+  saveDB();
+  renderAll();
+}
+function deleteLine(value) {
+  const used = db.movements.some((m) => m.line === value);
+  if (used) return alert("No se puede borrar porque hay movimientos con esa línea.");
+  db.settings.businessLines = db.settings.businessLines.filter((l) => l !== value);
+  saveDB();
+  renderAll();
+}
+
+function saveGeneralSettings() {
+  db.settings.currencyCode = $("currencyCode").value.trim().toUpperCase() || "USD";
+  db.settings.currencySymbol = $("currencySymbol").value.trim() || "$";
+  db.settings.autoBackup = $("autoBackup").checked;
+  saveDB();
+  renderAll();
+}
+function saveDistribution() {
+  const newDist = {};
+  let sum = 0;
+  db.settings.pillars.forEach((pillar, idx) => {
+    const input = $("dist_" + idx);
+    const value = Number(input ? input.value : 0);
+    newDist[pillar] = value;
+    sum += value;
+  });
+  if (Math.abs(sum - 100) > 0.01) return alert("La suma de la distribución debe ser 100%. Suma actual: " + sum + "%");
+  db.settings.distribution = newDist;
+  saveDB();
+  renderAll();
+}
+
+function exportData() { downloadBackup("manual"); }
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      db = JSON.parse(e.target.result);
+      normalizeDB();
+      saveDB();
+      renderAll();
+      alert("Datos importados correctamente.");
+    } catch (err) { alert("Archivo inválido: " + err.message); }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+function resetApp() {
+  if (!confirm("Esto reiniciará la app a valores de fábrica. ¿Continuar?")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+function toggleMovement(id) {
+  const m = db.movements.find((x) => x.id === id);
+  if (!m) return;
+  if (m.status === "pendiente") {
+    const ok = applyMovement(m);
+    if (!ok) return alert("Stock insuficiente para completar este movimiento.");
+  } else {
+    if (!confirm("Esto revertirá el efecto del movimiento y lo pasará a pendiente. ¿Continuar?")) return;
+    revertMovement(m);
+  }
+  saveDB();
+  renderAll();
+  backupIfAuto();
+}
+function deleteMovement(id) {
+  if (!confirm("¿Eliminar este movimiento?")) return;
+  const m = db.movements.find((x) => x.id === id);
+  if (!m) return;
+  if (m.status === "completado") {
+    if (m.isPurchase) revertPurchase(m); else revertConsumption(m);
+  }
+  db.movements = db.movements.filter((x) => x.id !== id);
+  db.inventoryMovements = db.inventoryMovements.filter((x) => x.linkedMovementId !== id);
+  saveDB();
+  renderAll();
+  backupIfAuto();
+}
+function deleteMaterial(id) {
+  const mat = getMaterial(id);
+  if (!mat) return;
+  if (mat.currentStock > 0) return alert("No puedes borrar un material con stock existente. Registra una merma primero.");
+  if (!confirm("¿Borrar el material '" + mat.name + "'?")) return;
+  db.materials = db.materials.filter((m) => m.id !== id);
+  saveDB();
+  renderAll();
+  backupIfAuto();
+}
+function deleteInventoryMovement(id) {
+  if (!confirm("¿Eliminar este movimiento de inventario? Esta acción NO revierte los cambios de stock.")) return;
+  db.inventoryMovements = db.inventoryMovements.filter((m) => m.id !== id);
+  saveDB();
+  renderAll();
+  backupIfAuto();
+}
+
+function initEvents() {
+  document.querySelectorAll(".tab").forEach((tab) => { tab.addEventListener("click", () => switchView(tab.dataset.view)); });
+  document.querySelectorAll("[data-sfilter]").forEach((btn) => { btn.addEventListener("click", () => { statusFilter = btn.dataset.sfilter; renderAll(); }); });
+  $("periodFilter").addEventListener("change", renderAll);
+
+  $("btnNewIncome").addEventListener("click", () => openMovementModal("income"));
+  $("btnNewExpense").addEventListener("click", () => openMovementModal("expense"));
+  $("btnNewPurchase").addEventListener("click", openPurchaseModal);
+  $("btnNewIncome2").addEventListener("click", () => openMovementModal("income"));
+  $("btnNewExpense2").addEventListener("click", () => openMovementModal("expense"));
+  $("btnNewPurchase2").addEventListener("click", openPurchaseModal);
+  $("btnNewPurchase3").addEventListener("click", openPurchaseModal);
+  $("btnNewWaste").addEventListener("click", openWasteModal);
+  $("btnAddMaterial").addEventListener("click", openMaterialModal);
+
+  $("btnCloseMovement").addEventListener("click", closeMovementModal);
+  $("btnSaveMovement").addEventListener("click", saveMovement);
+  $("btnClosePurchase").addEventListener("click", closePurchaseModal);
+  $("btnSavePurchase").addEventListener("click", savePurchase);
+  $("btnCloseWaste").addEventListener("click", closeWasteModal);
+  $("btnSaveWaste").addEventListener("click", saveWaste);
+  $("btnCloseMaterial").addEventListener("click", closeMaterialModal);
+  $("btnSaveMaterial").addEventListener("click", saveMaterial);
+
+  $("mType").addEventListener("change", updateModalVisibility);
+  $("mStatus").addEventListener("change", updateMovementPreview);
+  $("mAmount").addEventListener("input", updateMovementPreview);
+  $("mPillar").addEventListener("change", updateMovementPreview);
+  $("mLine").addEventListener("change", updateMovementPreview);
+  $("mConsumeMaterial").addEventListener("change", () => {
+    $("mConsumeDetails").classList.toggle("hidden", !$("mConsumeMaterial").checked);
+    updateMovementPreview();
+  });
+  $("mConsumeMaterialId").addEventListener("change", updateMovementPreview);
+  $("mConsumeSheets").addEventListener("input", updateMovementPreview);
+
+  $("pMaterial").addEventListener("change", updatePurchasePreview);
+  $("pSheets").addEventListener("input", updatePurchasePreview);
+  $("pCostPerPack").addEventListener("input", updatePurchasePreview);
+  $("pStatus").addEventListener("change", updatePurchasePreview);
+
+  $("btnSaveGeneral").addEventListener("click", saveGeneralSettings);
+  $("btnSaveDistribution").addEventListener("click", saveDistribution);
+  $("btnAddMethod").addEventListener("click", addPaymentMethod);
+  $("btnAddPillar").addEventListener("click", addPillar);
+  $("btnAddLine").addEventListener("click", addLine);
+
+  $("btnExportTop").addEventListener("click", exportData);
+  $("btnExportSettings").addEventListener("click", exportData);
+  $("fileImportTop").addEventListener("change", importData);
+  $("fileImportSettings").addEventListener("change", importData);
+  $("btnResetApp").addEventListener("click", resetApp);
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+    const value = decodeURIComponent(btn.dataset.value || "");
+    if (action === "toggleMovement") toggleMovement(id);
+    if (action === "deleteMovement") deleteMovement(id);
+    if (action === "deleteMethod") deletePaymentMethod(value);
+    if (action === "renamePillar") renamePillar(value);
+    if (action === "deletePillar") deletePillar(value);
+    if (action === "deleteLine") deleteLine(value);
+    if (action === "editMaterial") editMaterial(id);
+    if (action === "deleteMaterial") deleteMaterial(id);
+    if (action === "deleteInventoryMovement") deleteInventoryMovement(id);
+  });
+}
+
+loadDB();
+renderAll();
+initEvents();
+</script>
+</body>
+</html>

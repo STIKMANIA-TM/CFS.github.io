@@ -1,0 +1,146 @@
+{
+  "settings": {
+    "currencyCode": "USD",
+    "currencySymbol": "$",
+    "autoBackup": true,
+    "paymentMethods": [
+      "Efectivo",
+      "Transferencia",
+      "Tarjeta Tropical",
+      "Tarjeta Clásica",
+      "Saldo Móvil"
+    ],
+    "pillars": [
+      "Inversión",
+      "Comida",
+      "Ahorro"
+    ],
+    "businessLines": [
+      "General",
+      "Web",
+      "Venta de stickers"
+    ],
+    "distribution": {
+      "Inversión": 50,
+      "Comida": 30,
+      "Ahorro": 20
+    },
+    "defaultMargin": 60,
+    "defaultStickersPerSheet": 12
+  },
+  "movements": [
+    {
+      "id": "1791327062641_98320",
+      "createdAt": 1791327062641,
+      "type": "income",
+      "date": "2026-10-06",
+      "method": "Efectivo",
+      "amount": 20,
+      "cost": 3.4,
+      "client": "Novoelectra",
+      "notes": "el precio original es 14 usd, 6 fueron propina",
+      "source": "STIKMANIA",
+      "line": "Venta de stickers",
+      "pillar": null,
+      "allocations": {
+        "Inversión": 10,
+        "Comida": 6,
+        "Ahorro": 4
+      },
+      "status": "completado",
+      "isPurchase": false
+    },
+    {
+      "id": "1791414465658_27133",
+      "createdAt": 1791414465658,
+      "type": "income",
+      "date": "2026-10-07",
+      "method": "Transferencia",
+      "status": "completado",
+      "amount": 23,
+      "cost": 16.8,
+      "client": "Atono",
+      "notes": "Chabeli",
+      "source": "STIKMANIA",
+      "line": "Venta de stickers",
+      "pillar": null,
+      "allocations": {
+        "Inversión": 11.5,
+        "Comida": 6.9,
+        "Ahorro": 4.6
+      },
+      "isPurchase": false,
+      "consumeMaterialId": "vinyl",
+      "consumeSheets": 12,
+      "inventoryMovementId": "1791414465658_28879"
+    },
+    {
+      "id": "1791414782063_9641",
+      "createdAt": 1791414782063,
+      "type": "expense",
+      "date": "2026-10-07",
+      "method": "Efectivo",
+      "status": "pendiente",
+      "amount": 12,
+      "cost": 0,
+      "client": "Laura",
+      "notes": "el comprador puede cambiar",
+      "source": null,
+      "line": null,
+      "pillar": null,
+      "allocations": null,
+      "isPurchase": true,
+      "purchaseMaterialId": "vinyl",
+      "purchasePacks": 1,
+      "purchaseCostPerPack": 12,
+      "purchaseSheets": 20,
+      "inventoryMovementId": null,
+      "prevMaterial": null
+    }
+  ],
+  "materials": [
+    {
+      "id": "vinyl",
+      "name": "Vinilo",
+      "sheetsPerPack": 20,
+      "minStock": 10,
+      "currentStock": 10,
+      "avgCostPerSheet": 0.6,
+      "lastPurchaseCostPerPack": 12,
+      "lastPurchaseDate": null,
+      "stickersPerSheet": 12
+    },
+    {
+      "id": "photo_paper",
+      "name": "Papel Fotográfico Adhesivo",
+      "sheetsPerPack": 50,
+      "minStock": 10,
+      "currentStock": 20,
+      "avgCostPerSheet": 0.5,
+      "lastPurchaseCostPerPack": 10,
+      "lastPurchaseDate": null
+    }
+  ],
+  "inventoryMovements": [
+    {
+      "id": "1791332545923_16986",
+      "createdAt": 1791332545923,
+      "date": "2026-10-07",
+      "materialId": "vinyl",
+      "type": "adjustment",
+      "sheets": -18,
+      "notes": "Ajuste manual de inventario. Antes: 40 → Ahora: 22",
+      "linkedMovementId": null
+    },
+    {
+      "id": "1791414465658_28879",
+      "createdAt": 1791414465658,
+      "date": "2026-10-07",
+      "materialId": "vinyl",
+      "type": "consumption",
+      "sheets": 12,
+      "notes": "Consumo por venta: Chabeli",
+      "linkedMovementId": "1791414465658_27133"
+    }
+  ]
+}
